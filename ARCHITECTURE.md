@@ -167,7 +167,8 @@ com.finplus/
 │   └── DateRangeValidator.java
 │
 ├── common/                      # Утилиты
-│   └── RequestContextHolder.java
+│   ├── RequestContextHolder.java
+│   └── LoggingHelper.java       # Утилита для работы с MDC
 │
 └── metrics/                     # Prometheus метрики
     └── BankMetrics.java
@@ -413,10 +414,78 @@ interface IApiResponse<T> {
 
 ### 4. **Логирование**
 
-- Все запросы логируются с requestId
-- Разные уровни логирования (DEBUG, INFO, WARN, ERROR)
-- Логирование банковских API в отдельный файл
-- Маскировка чувствительных данных
+#### Конфигурация
+- Уровень логирования настраивается через `logging.level.root` в `application.properties` (по умолчанию INFO)
+- Поддерживаемые уровни: **INFO**, **DEBUG**, **WARN**
+- Ротация файлов: автоматическое удаление логов старше **2 недель** (14 дней)
+- Раздельные логи для банковских API в отдельном файле
+- Уровень логирования можно переопределить через переменную окружения `LOG_LEVEL`
+
+#### Структура JSON лога
+Все логи пишутся в JSON формате с единой структурой:
+
+```json
+{
+  "level": "info|debug|warn",
+  "message": "Log message text",
+  "timestamp": "2025-01-20T10:30:45.123+0300",
+  "data": {
+    "http": {
+      "ip": "192.168.1.1",
+      "url": "/api/balances",
+      "userAgent": "Mozilla/5.0..."
+    },
+    "source": {
+      "file": "com.finplus.service.BankService",
+      "function": "getBalances",
+      "line": 45
+    },
+    "data": {
+      "userId": "user123",
+      "bankName": "VTB"
+    }
+  },
+  "error": {
+    "code": "TOKEN_EXPIRED",
+    "context": {
+      "bankName": "VTB",
+      "userId": "user123"
+    },
+    "message": "Token expired for bank: VTB",
+    "stackTrace": "..."
+  }
+}
+```
+
+**Примечания:**
+- Поле `error` присутствует только при логировании ошибок
+- Поле `error.context` заполняется только в DEBUG режиме
+- Поле `data.data` содержит кастомные данные конкретного лога
+- HTTP контекст (`data.http`) заполняется автоматически через MDC в интерцепторах
+- Source информация (`data.source`) заполняется автоматически Logback
+
+#### Файлы логов
+- `logs/finplus.log` — основные логи приложения
+- `logs/bank-api.log` — логи банковских API
+- Ротация: `logs/finplus.2025-01-20.log`, `logs/bank-api.2025-01-20.log`
+- Хранение: 14 дней, после чего автоматическое удаление
+
+#### Использование
+```java
+// В RequestLoggingInterceptor
+LoggingHelper.setHttpContext(request);
+
+// При логировании с кастомными данными
+Map<String, Object> logData = new HashMap<>();
+logData.put("userId", userId);
+logData.put("bankName", bankName);
+LoggingHelper.setData(logData);
+log.info("Requesting balances");
+
+// При логировании ошибки
+LoggingHelper.setError("TOKEN_EXPIRED", "Token expired", context, isDebugMode);
+log.error("Failed to get balances");
+```
 
 ### 5. **Метрики Prometheus**
 
@@ -581,6 +650,58 @@ CREATE TABLE transactions (
 
 ---
 
+## ⚙️ Конфигурация
+
+### application.properties
+
+```properties
+# Server
+server.port=8080
+
+# Database (H2)
+spring.datasource.url=jdbc:h2:mem:finplusdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+spring.jpa.hibernate.ddl-auto=update
+spring.h2.console.enabled=true
+spring.h2.console.path=/h2-console
+
+# Logging
+logging.level.root=${LOG_LEVEL:INFO}
+logging.level.com.finplus=DEBUG
+logging.level.com.finplus.service.bank=INFO
+logging.file.name=logs/finplus.log
+
+# Banks Configuration
+bank.vtb.base-url=https://api-vtb.ru
+bank.vtb.name=VTB
+
+bank.sber.base-url=https://api-sber.ru
+bank.sber.name=SBER
+
+bank.tinkoff.base-url=https://api-tinkoff.ru
+bank.tinkoff.name=TINKOFF
+
+# Swagger
+springdoc.api-docs.path=/api-docs
+springdoc.swagger-ui.path=/swagger-ui.html
+
+# Actuator (Prometheus)
+management.endpoints.web.exposure.include=health,info,prometheus
+management.endpoint.health.show-details=always
+management.metrics.export.prometheus.enabled=true
+```
+
+### Переменные окружения
+
+- `LOG_LEVEL` — уровень логирования (INFO, DEBUG, WARN). По умолчанию: INFO
+- `SPRING_PROFILES_ACTIVE` — активный профиль (dev, prod)
+- `VTB_ACCESS_TOKEN` — токен для VTB API
+- `SBER_ACCESS_TOKEN` — токен для SBER API
+- `TINKOFF_ACCESS_TOKEN` — токен для Tinkoff API
+
+---
+
 ## 🐳 Docker и развертывание
 
 ### docker-compose.yml
@@ -595,6 +716,7 @@ services:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
+      - LOG_LEVEL=${LOG_LEVEL:INFO}
       - VTB_ACCESS_TOKEN=${VTB_ACCESS_TOKEN}
       - SBER_ACCESS_TOKEN=${SBER_ACCESS_TOKEN}
       - TINKOFF_ACCESS_TOKEN=${TINKOFF_ACCESS_TOKEN}
@@ -690,9 +812,62 @@ CMD ["nginx", "-g", "daemon off;"]
 - `subscription_active_users` — количество активных пользователей по типам подписки
 
 ### Логирование
-- Все запросы логируются с requestId
-- Раздельные логи для банковских API
-- JSON формат для production (опционально)
+
+#### Конфигурация
+- Уровень логирования настраивается через `logging.level.root` в `application.properties` (по умолчанию INFO)
+- Поддерживаемые уровни: **INFO**, **DEBUG**, **WARN**
+- Ротация файлов: автоматическое удаление логов старше **2 недель** (14 дней)
+- Раздельные логи для банковских API в отдельном файле
+- Уровень логирования можно переопределить через переменную окружения `LOG_LEVEL`
+
+#### Структура JSON лога
+Все логи пишутся в JSON формате с единой структурой:
+
+```json
+{
+  "level": "info|debug|warn",
+  "message": "Log message text",
+  "timestamp": "2025-01-20T10:30:45.123+0300",
+  "data": {
+    "http": {
+      "ip": "192.168.1.1",
+      "url": "/api/balances",
+      "userAgent": "Mozilla/5.0..."
+    },
+    "source": {
+      "file": "com.finplus.service.BankService",
+      "function": "getBalances",
+      "line": 45
+    },
+    "data": {
+      "userId": "user123",
+      "bankName": "VTB"
+    }
+  },
+  "error": {
+    "code": "TOKEN_EXPIRED",
+    "context": {
+      "bankName": "VTB",
+      "userId": "user123"
+    },
+    "message": "Token expired for bank: VTB",
+    "stackTrace": "..."
+  }
+}
+```
+
+**Примечания:**
+- Поле `error` присутствует только при логировании ошибок
+- Поле `error.context` заполняется только в DEBUG режиме
+- Поле `data.data` содержит кастомные данные конкретного лога
+- HTTP контекст (`data.http`) заполняется автоматически через MDC в интерцепторах
+- Source информация (`data.source`) заполняется автоматически Logback
+
+#### Файлы логов
+- `logs/finplus.log` — основные логи приложения
+- `logs/bank-api.log` — логи банковских API
+- Ротация: `logs/finplus.2025-01-20.log`, `logs/bank-api.2025-01-20.log`
+- Хранение: 14 дней, после чего автоматическое удаление
 
 ### Swagger документация
 - Доступна по адресу: `http://localhost:8080/swagger-ui.html`

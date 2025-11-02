@@ -38,9 +38,6 @@ dist/
 .env.local
 .env.*.local
 
-# Environment files (секреты хранятся в .env, не в git)
-# application.properties хранится в git (без секретов)
-
 # Logs
 logs/
 *.log

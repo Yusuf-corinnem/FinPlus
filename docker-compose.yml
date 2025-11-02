@@ -1,0 +1,78 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: finplus-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-dev}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+
+      # Database (если используется PostgreSQL)
+      - DB_URL=${DB_URL:-}
+      - DB_USERNAME=${DB_USERNAME:-}
+      - DB_PASSWORD=${DB_PASSWORD:-}
+      - DB_DRIVER=${DB_DRIVER:-}
+      - DB_PLATFORM=${DB_PLATFORM:-}
+
+      # Bank API Tokens
+      - VTB_ACCESS_TOKEN=${VTB_ACCESS_TOKEN:-}
+      - SBER_ACCESS_TOKEN=${SBER_ACCESS_TOKEN:-}
+      - TINKOFF_ACCESS_TOKEN=${TINKOFF_ACCESS_TOKEN:-}
+
+      # Bank API URLs (опционально)
+      - VTB_BASE_URL=${VTB_BASE_URL:-}
+      - SBER_BASE_URL=${SBER_BASE_URL:-}
+      - TINKOFF_BASE_URL=${TINKOFF_BASE_URL:-}
+
+      # CORS (опционально)
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-}
+    volumes:
+      - ./logs:/app/logs
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+    networks:
+      - finplus-network
+    restart: unless-stopped
+  # Frontend (заглушка, будет добавлен позже)
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: finplus-frontend
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - VITE_API_URL=http://localhost:8080/api
+  #   depends_on:
+  #     - backend
+  #   networks:
+  #     - finplus-network
+  #   restart: unless-stopped
+
+  # Prometheus (опционально)
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   container_name: finplus-prometheus
+  #   volumes:
+  #     - ./prometheus.yml:/etc/prometheus/prometheus.yml
+  #   ports:
+  #     - "9090:9090"
+  #   networks:
+  #     - finplus-network
+  #   restart: unless-stopped
+
+networks:
+  finplus-network:
+    driver: bridge
+
+volumes:
+  logs:
+
+

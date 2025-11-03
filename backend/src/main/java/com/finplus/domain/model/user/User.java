@@ -42,7 +42,7 @@ public class User{
     @Column(name = "created_at", nullable = false, columnDefinition = "TIMESTAMPTZ")
     private OffsetDateTime createAt;
 
-    @CreationTimestamp
+    @UpdateTimestamp
     @Column(name = "update_at", nullable = false, columnDefinition = "TIMESTAMPTZ")
     private OffsetDateTime updateAt;
 }

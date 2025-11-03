@@ -1,0 +1,46 @@
+package com.finplus.domain.model.user;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.annotations.columnDefinition;
+
+import lombok.Getter;
+import lombok.Setter;
+
+import java.time.OffsetDateTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = "users")
+@Getter
+@Setter
+public class User{
+    @Id
+    @UuidGenerator
+    private UUID id;
+
+    @Column(name = "client_id", length = 128, nullable = false, unique = true)
+    private String clientId;
+
+    @Column (name = "subscription_id", nullable = false)
+    private UUID subscriptionId;
+
+    @Enumerated(EnumType.String)
+    @Column (name = "status", nullable = false)
+    private UserStatus status = "active";
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, columnDefinition = "TIMESTAMPTZ")
+    private OffsetDateTime createAt;
+
+    @CreationTimestamp
+    @Column(name = "update_at", nullable = false, columnDefinition = "TIMESTAMPTZ")
+    private OffsetDateTime updateAt;
+}

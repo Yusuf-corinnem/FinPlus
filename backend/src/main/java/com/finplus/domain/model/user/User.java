@@ -17,6 +17,8 @@ import lombok.Setter;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import com.finplus.domain.model.user.UserStatus;
+
 @Entity
 @Table(name = "users")
 @Getter
@@ -34,7 +36,7 @@ public class User{
 
     @Enumerated(EnumType.String)
     @Column (name = "status", nullable = false)
-    private UserStatus status = "active";
+    private UserStatus status = UserStatus.ACTIVE;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, columnDefinition = "TIMESTAMPTZ")

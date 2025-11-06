@@ -1,6 +1,6 @@
-package com.finplus.domain.dto.request.user;
+package com.finpuls.domain.dto.request.user;
 
-import com.finplus.domain.model.user.UserStatus;
+import com.finpuls.domain.model.user.UserStatus;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

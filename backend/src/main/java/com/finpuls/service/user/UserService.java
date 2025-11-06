@@ -1,14 +1,15 @@
-package com.funplus.service.user
+package com.finpuls.service.user;
 
-import com.finplus.domain.model.user.User;
-import com.finplus.domain.model.user.UserStatus;
-import com.finplus.domain.repository.UserRepository;
-import com.finplus.service.common.AbstractCrudService;
+import com.finpuls.domain.model.user.User;
+import com.finpuls.domain.model.user.UserStatus;
+import com.finpuls.domain.repository.UserRepository;
+import com.finpuls.service.common.AbstractCrudService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.List
-import java.util.Optional
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -27,12 +28,12 @@ public class UserService extends AbstractCrudService<User, UUID> {
         User user = new User();
         user.setClientId(clientId);
         user.setSubscriptionId(subscriptionId);
-        if (status) 
+        if (status != null) 
             user.setStatus(status);
         return user;
     }
 
-    @Transactional(readOnly = true){}
+    @Transactional(readOnly = true)
     public Optional<User> findByClientId(String clientId){
         return repository.findByClientId(clientId);
     }

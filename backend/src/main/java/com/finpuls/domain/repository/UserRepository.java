@@ -1,6 +1,6 @@
-package com.finplus.domain.repository;
+package com.finpuls.domain.repository;
 
-import com.finplus.domain.model.user.User;
+import com.finpuls.domain.model.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 import java.util.UUID;

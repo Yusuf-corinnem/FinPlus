@@ -1,4 +1,4 @@
-package com.finplus.domain.model.user;
+package com.finpuls.domain.model.user;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -12,13 +12,13 @@ import org.hibernate.annotations.UuidGenerator;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.NoArgsConstructor
-import lombok.AllArgsConstructor
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-import com.finplus.domain.model.user.UserStatus;
+import com.finpuls.domain.model.user.UserStatus;
 
 @Entity
 @Table(name = "users")

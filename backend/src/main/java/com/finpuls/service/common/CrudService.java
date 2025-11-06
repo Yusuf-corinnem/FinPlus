@@ -9,5 +9,3 @@ public interface CrudService<E, ID> {
     E save(E entity);
     void deleteById(ID id);
 }
-
-

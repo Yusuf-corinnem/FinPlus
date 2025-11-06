@@ -12,7 +12,7 @@ import java.util.Optional
 import java.util.UUID;
 
 @Service
-public class UserService extends AbstractCrudService<User, UUID> implements IUserService {
+public class UserService extends AbstractCrudService<User, UUID> {
     private final UserRepository repository;
 
     @Autowired
@@ -38,11 +38,11 @@ public class UserService extends AbstractCrudService<User, UUID> implements IUse
 
     @Transactional(readOnly = true)
     public boolean existsByClientId(String clientId){
-        return repository.existsByClientId("clientId", cliendId);
+        return repository.existsByClientId(cliendId);
     }
 
     @Transactional(readOnly = true)
     public List<User> findAllByStatus(UserStatus status){
-        return repository.findAllByStatus("status", status);
+        return findAllByField("status", status);
     }
 }

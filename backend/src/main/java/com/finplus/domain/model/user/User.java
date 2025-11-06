@@ -30,7 +30,7 @@ public class User{
     @Column(name = "client_id", length = 128, nullable = false, unique = true)
     private String clientId;
 
-    @Column (name = "subscription_id", nullable = true)
+    @Column (name = "subscription_id", nullable = false)
     private UUID subscriptionId;
 
     @Enumerated(EnumType.STRING)

@@ -23,9 +23,9 @@ public class UserService extends AbstractCrudService<User, UUID> {
 
 
     @Transactional
-    public User create(String cliendId, UUID subscriptionId, UserStatus status){
+    public User create(String clientId, UUID subscriptionId, UserStatus status){
         User user = new User();
-        user.setClientId(cliendId);
+        user.setClientId(clientId);
         user.setSubscriptionId(subscriptionId);
         if (status) 
             user.setStatus(status);
@@ -39,7 +39,7 @@ public class UserService extends AbstractCrudService<User, UUID> {
 
     @Transactional(readOnly = true)
     public boolean existsByClientId(String clientId){
-        return repository.existsByClientId(cliendId);
+        return repository.existsByClientId(clientId);
     }
 
     @Transactional(readOnly = true)
